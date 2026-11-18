@@ -1,0 +1,4 @@
+*.o
+*_test
+edge_tests
+test_printf
