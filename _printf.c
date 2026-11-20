@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include "main.h"
 #include <stdarg.h>
 #include <stddef.h>
@@ -20,6 +21,8 @@ int _printf(const char *format, ...)
 	int length = 0;
 	int width = 0;
 	int precision = -1;
+	int zero = 0;
+	int left = 0;
 
 	if (format == NULL)
 		return (-1);
@@ -49,9 +52,10 @@ int _printf(const char *format, ...)
 			length = 0;
 			width = 0;
 			precision = -1;
+			zero = 0;
+			left = 0;
 
-			while (format[i] == '+' || format[i] == ' ' ||
-					format[i] == '#')
+			while (format[i] == '+' || format[i] == ' ' || format[i] == '#' || format[i] == '0' || format[i] == '-')
 			{
 				if (format[i] == '+')
 					plus = 1;
@@ -59,7 +63,10 @@ int _printf(const char *format, ...)
 					space = 1;
 				else if (format[i] == '#')
 					alternate = 1;
-
+				else if (format[i] == '0')
+					zero = 1;
+				else if (format[i] == '-')
+					left = 1;
 				i++;
 			}
 			while (format[i] >= '0' && format[i] <= '9')
@@ -104,17 +111,26 @@ int _printf(const char *format, ...)
 
 			else if (format[i] == 'c')
 			{
-				result = _print_padding(width, 1, buffer, &buffer_index);
-				if (result == -1)
-					return (-1);
-
-				count += result;
+				if (!left)
+				{
+					result = _print_padding(width, 1, buffer, &buffer_index);
+					if (result == -1)
+						return (-1);
+					count += result;
+				}
 
 				result = _buffer_char(va_arg(args, int), buffer, &buffer_index);
 				if (result == -1)
 					return (-1);
-
 				count++;
+
+				if (left)
+				{
+					result = _print_padding(width, 1, buffer, &buffer_index);
+					if (result == -1)
+						return (-1);
+					count += result;
+				}
 			}
 
 			else if (format[i] == 's')
@@ -134,17 +150,26 @@ int _printf(const char *format, ...)
 					str_length++;
 				}
 
+				if (!left)
+				{
+					result = _print_padding(width, str_length, buffer, &buffer_index);
+					if (result == -1)
+						return (-1);
+					count += result;
+				}
 
-				result = _print_padding(width, str_length, buffer, &buffer_index);
-				if (result == -1)
-					return (-1);
-				count += result;
 				result = _print_string(str, str_length, buffer, &buffer_index);
-
 				if (result == -1)
 					return (-1);
-
 				count += result;
+
+				if (left)
+				{
+					result = _print_padding(width, str_length, buffer, &buffer_index);
+					if (result == -1)
+						return (-1);
+					count += result;
+				}
 			}
 
 			else if (format[i] == 'd' || format[i] == 'i')
@@ -162,9 +187,9 @@ int _printf(const char *format, ...)
 					return (-1);
 
 				if (precision >= 0)
-					result = _print_precision_buffer(temp, temp_index, width, precision, buffer, &buffer_index);
+					result = _print_precision_buffer(temp, temp_index, width, precision, left, buffer, &buffer_index);
 				else
-					result = _print_padded_buffer(temp, temp_index, width, buffer, &buffer_index);
+					result = _print_padded_buffer(temp, temp_index, width, zero, left, buffer, &buffer_index);
 				if (result == -1)
 					return (-1);
 
@@ -189,9 +214,9 @@ int _printf(const char *format, ...)
 					return (-1);
 
 				if (precision >= 0)
-					result = _print_precision_buffer(temp, temp_index, width, precision, buffer, &buffer_index);
+					result = _print_precision_buffer(temp, temp_index, width, precision, left, buffer, &buffer_index);
 				else
-					result = _print_padded_buffer(temp, temp_index, width, buffer, &buffer_index);
+					result = _print_padded_buffer(temp, temp_index, width, zero, left, buffer, &buffer_index);
 				if (result == -1)
 					return (-1);
 
@@ -214,9 +239,9 @@ int _printf(const char *format, ...)
 					return (-1);
 
 				if (precision >= 0)
-					result = _print_precision_buffer(temp, temp_index, width, precision, buffer, &buffer_index);
+					result = _print_precision_buffer(temp, temp_index, width, precision, left, buffer, &buffer_index);
 				else
-					result = _print_padded_buffer(temp, temp_index, width, buffer, &buffer_index);
+					result = _print_padded_buffer(temp, temp_index, width, zero, left, buffer, &buffer_index);
 				if (result == -1)
 					return (-1);
 
@@ -236,10 +261,11 @@ int _printf(const char *format, ...)
 				if (result == -1)
 					return (-1);
 
+
 				if (precision >= 0)
-					result = _print_precision_buffer(temp, temp_index, width, precision, buffer, &buffer_index);
+					result = _print_precision_buffer(temp, temp_index, width, precision, left, buffer, &buffer_index);
 				else
-					result = _print_padded_buffer(temp, temp_index, width, buffer, &buffer_index);
+					result = _print_padded_buffer(temp, temp_index, width, zero, left, buffer, &buffer_index);
 
 				if (result == -1)
 					return (-1);
@@ -255,7 +281,7 @@ int _printf(const char *format, ...)
 				if (result == -1)
 					return (-1);
 
-				result = _print_padded_buffer(temp, temp_index, width, buffer, &buffer_index);
+				result = _print_padded_buffer(temp, temp_index, width, zero, 0, buffer, &buffer_index);
 				if (result == -1)
 					return (-1);
 
@@ -282,12 +308,12 @@ int _printf(const char *format, ...)
 			}
 
 		}
-	}
 
-	if (_flush_buffer(buffer, &buffer_index) == -1)
-	{
-		va_end(args);
-		return (-1);
+		if (_flush_buffer(buffer, &buffer_index) == -1)
+		{
+			va_end(args);
+			return (-1);
+		}
 	}
 
 	va_end(args);

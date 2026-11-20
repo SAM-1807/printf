@@ -83,18 +83,52 @@ int _int_to_string(int n, char *temp)
  *
  * Return: number of characters printed, or -1 on failure
  */
-int _print_padded_buffer(char *temp, int temp_length, int width, char *buffer, int *buffer_index)
+int _print_padded_buffer(char *temp, int temp_length, int width, int zero, int left, char *buffer, int *buffer_index)
 {
-	int i, count = 0;
-	int result;
+	int i, count = 0, prefix = 0;
+	int padding, result;
 
-	result = _print_padding(width, temp_length, buffer, buffer_index);
-	if (result == -1)
-		return (-1);
+	padding = width - temp_length;
 
-	count += result;
+	if (padding < 0)
+		padding = 0;
 
-	for (i = 0; i < temp_length; i++)
+	if (left)
+		zero = 0;
+
+	if (padding > 0 && zero)
+	{
+		if (temp[0] == '-' || temp[0] == '+' || temp[0] == ' ')
+			prefix = 1;
+		else if (temp_length > 1 && temp[0] == '0' &&
+				(temp[1] == 'x' || temp[1] == 'X'))
+			prefix = 2;
+
+		for (i = 0; i < prefix; i++)
+		{
+			result = _buffer_char(temp[i], buffer, buffer_index);
+			if (result == -1)
+				return (-1);
+			count++;
+		}
+
+		for (i = 0; i < padding; i++)
+		{
+			result = _buffer_char('0', buffer, buffer_index);
+			if (result == -1)
+				return (-1);
+			count++;
+		}
+	}
+	else if (!left)
+	{
+		result = _print_padding(width, temp_length, buffer, buffer_index);
+		if (result == -1)
+			return (-1);
+		count += result;
+	}
+
+	for (i = prefix; i < temp_length; i++)
 	{
 		result = _buffer_char(temp[i], buffer, buffer_index);
 		if (result == -1)
@@ -102,8 +136,18 @@ int _print_padded_buffer(char *temp, int temp_length, int width, char *buffer, i
 		count++;
 	}
 
+	if (left)
+	{
+		result = _print_padding(width, temp_length, buffer, buffer_index);
+		if (result == -1)
+			return (-1);
+		count += result;
+	}
+
 	return (count);
 }
+
+
 
 /**
  * _print_precision_buffer - prints a number with precision and width
@@ -116,11 +160,11 @@ int _print_padded_buffer(char *temp, int temp_length, int width, char *buffer, i
  *
  * Return: number of characters printed, or -1 on failure
  */
-int _print_precision_buffer(char *temp, int temp_length, int width, int precision, char *buffer, int *buffer_index)
+int _print_precision_buffer(char *temp, int temp_length, int width, int precision, int left, char *buffer, int *buffer_index)
+
 {
 	int prefix = 0, zeros = 0, spaces, total;
 	int i, count = 0, result;
-
 
 	if (precision == 0 && temp_length == 1 && temp[0] == '0')
 		temp_length = 0;
@@ -138,7 +182,10 @@ int _print_precision_buffer(char *temp, int temp_length, int width, int precisio
 	total = temp_length + zeros;
 	spaces = width - total;
 
-	if (spaces > 0)
+	if (spaces < 0)
+		spaces = 0;
+
+	if (!left)
 	{
 		for (i = 0; i < spaces; i++)
 		{
@@ -173,5 +220,17 @@ int _print_precision_buffer(char *temp, int temp_length, int width, int precisio
 		count++;
 	}
 
+	if (left)
+	{
+		for (i = 0; i < spaces; i++)
+		{
+			result = _buffer_char(' ', buffer, buffer_index);
+			if (result == -1)
+				return (-1);
+			count++;
+		}
+
+	}
 	return (count);
+
 }

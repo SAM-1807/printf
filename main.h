@@ -18,8 +18,8 @@ int _print_long_number(long n, int plus, int space, char *buffer, int *buffer_in
 int _print_long_base(unsigned long n, unsigned int base, int letter_case, int alternate, char *buffer, int *buffer_index);
 int _print_padding(int width, int length, char *buffer, int *buffer_index);
 int _int_to_string(int n, char *temp);
-int _print_padded_buffer(char *temp, int temp_length, int width, char *buffer, int *buffer_index);
-int _print_precision_buffer(char *temp, int temp_length, int width, int precision, char *buffer, int *buffer_index);
+int _print_padded_buffer(char *temp, int temp_length, int width, int zero, int left, char *buffer, int *buffer_index);
+int _print_precision_buffer(char *temp, int temp_length, int width, int precision, int left, char *buffer, int *buffer_index);
 
 #endif
 
